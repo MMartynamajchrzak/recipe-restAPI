@@ -20,7 +20,7 @@ class AdminSiteTests(TestCase):
 
     def test_users_listed(self):
         # Check user listed on user page
-        #              <app> : <url that I want>
+        #              <config> : <url that I want>
         url = reverse('admin:core_user_changelist')
         response = self.client.get(url)
 
