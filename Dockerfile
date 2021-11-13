@@ -6,7 +6,18 @@ ENV PYTHONUNBUFFERED 1
 #    copy from           copy to
 COPY ./requirements.txt /requirements.txt
 
+# user package manager (apk), add package, update registry before we add it,
+# no-cache: dont store registry id on dockerflie -->
+# minimize number of packages included in our docker container
+RUN apk add --update --no-cache postgresql-client
+
+# tp easily remove dependecies later
+RUN apk add --update --no-cache --virtual .tmp-build-deps \
+                gcc libc-dev linux-headers postgresql-dev
+
 RUN pip install -r /requirements.txt
+
+RUN apk del .tmp-build-deps
 
 RUN mkdir /app
 
