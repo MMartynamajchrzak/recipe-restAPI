@@ -50,7 +50,7 @@ jobs:
           pip install -r requirements.txt
       - name: Test with unittest
         run: |
-          python -m test
+          test app
         env:
           POSTGRES_NAME: ${{ matrix.db_name }}
           POSTGRES_USER: ${{ matrix.db_user }}
