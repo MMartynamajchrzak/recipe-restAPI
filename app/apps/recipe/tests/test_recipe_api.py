@@ -104,3 +104,63 @@ class PrivateRecipeAPITests(TestCase):
         serializer = RecipeDetailSerializer(recipe)
 
         self.assertEqual(response.data, serializer.data)
+
+    def test_create_basic_recipe(self):
+        # Test creating recipe
+        payload = {
+            'title': 'BBQ Steak',
+            'time_minutes': 60,
+            'price': 20.00
+        }
+
+        response = self.client.post(RECIPES_URL, payload)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        recipe = Recipe.objects.get(id=response.data['id'])
+        for key in payload.keys():
+            self.assertEqual(payload[key], getattr(recipe, key))
+
+    def test_create_recipe_with_tags_assigned(self):
+        # test creating a recipe with tags assigned
+        tag1 = sample_tag(user=self.user, name='Vegan')
+        tag2 = sample_tag(user=self.user, name='Healthy')
+
+        payload = {
+            'title': 'Avocado toast',
+            'tags': [tag1.id, tag2.id],
+            'time_minutes': 10,
+            'price': 3.00
+        }
+
+        response = self.client.post(RECIPES_URL, payload)
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        recipe = Recipe.objects.get(id=response.data['id'])
+        tags = recipe.tags.all()
+
+        self.assertEqual(tags.count(), 2)
+        self.assertIn(tag1, tags)
+        self.assertIn(tag2, tags)
+
+    def test_create_recipe_with_ingredients(self):
+        # test creating recipes with ingredients
+        ingredient1 = sample_ingredient(user=self.user, name='Curry')
+        ingredient2 = sample_ingredient(user=self.user, name='Lobster')
+        payload = {
+            'title': 'Lobster in curry',
+            'ingredients': [ingredient1.id, ingredient2.id],
+            'time_minutes': 90,
+            'price': 50.00
+        }
+
+        response = self.client.post(RECIPES_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        recipe = Recipe.objects.get(id=response.data['id'])
+        ingredients = recipe.ingredients.all()
+
+        self.assertEqual(ingredients.count(), 2)
+        self.assertIn(ingredient1, ingredients)
+        self.assertIn(ingredient2, ingredients)
