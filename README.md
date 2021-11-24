@@ -2,11 +2,11 @@
 
 ## General info
 Recipe REST-api written in django. It includes:
--docker
--unittest
--DRF
--postgres db
--github CI
+- docker
+- unittest
+- DRF
+- postgres db
+- github CI
 
 
 ## Setup
