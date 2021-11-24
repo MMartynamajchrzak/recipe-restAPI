@@ -1,11 +1,11 @@
-from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from apps.core.models import Tag, Ingredients, Recipe
-from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, RecipeDetailSerializer,\
+from .serializers import TagSerializer, IngredientSerializer, RecipeSerializer, RecipeDetailSerializer, \
     RecipeImageSerializer
 
 
@@ -19,7 +19,16 @@ class BaseRecipeViewSet(viewsets.GenericViewSet,
 
     def get_queryset(self):
         # return objects for the authenticated user only
-        return self.queryset.filter(user=self.request.user).order_by('-name')
+        assigned_only = bool(
+            int(self.request.query_params.get('assigned_only', default=0))
+        )
+        queryset = self.queryset
+        if assigned_only:
+            queryset = queryset.filter(recipe__isnull=False)
+
+        return queryset.filter(
+            user=self.request.user
+        ).order_by('-name').distinct()
 
     def perform_create(self, serializer):
         # Create a new object

@@ -1,13 +1,11 @@
 from django.contrib.auth import get_user_model
-from django.urls import reverse
 from django.test import TestCase
-
+from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.core.models import Ingredients
+from apps.core.models import Ingredients, Recipe
 from apps.recipe.serializers import IngredientSerializer
-
 
 INGREDIENTS_URL = reverse('recipe:ingredients-list')
 
@@ -83,3 +81,54 @@ class PrivateIngredientsAPITests(TestCase):
         response = self.client.post(INGREDIENTS_URL, payload)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_ingredients_assigned_to_recipes(self):
+        # test filtering ingredients by those assigned to recipes
+        ingredient1 = Ingredients.objects.create(
+            user=self.user, name='apples'
+        )
+        ingredient2 = Ingredients.objects.create(
+            user=self.user, name='Turkey'
+        )
+        recipe = Recipe.objects.create(
+            title='Apple crumble',
+            time_minutes=60,
+            price=10.00,
+            user=self.user
+        )
+        recipe.ingredients.add(ingredient1)
+
+        response = self.client.get(INGREDIENTS_URL, {'assigned_only': 1})
+
+        serializer1 = IngredientSerializer(ingredient1)
+        serializer2 = IngredientSerializer(ingredient2)
+
+        self.assertIn(serializer1.data, response.data)
+        self.assertNotIn(serializer2.data, response.data)
+
+    def test_retrieve_ingredient_assigned_unique(self):
+        # test filtering ingredients by assigned returns unique items
+        ingredient = Ingredients.objects.create(
+            user=self.user,
+            name='eggs'
+        )
+        Ingredients.objects.create(user=self.user, name='milk')
+        recipe1 = Recipe.objects.create(
+            title='Hard eggs',
+            time_minutes=10,
+            price=3.00,
+            user=self.user
+        )
+        recipe1.ingredients.add(ingredient)
+        recipe2 = Recipe.objects.create(
+            title='Eggs on toast',
+            time_minutes=10,
+            price=3.00,
+            user=self.user
+        )
+        recipe2.ingredients.add(ingredient)
+
+        response = self.client.get(INGREDIENTS_URL, {'assigned_only': 1})
+
+        self.assertEqual(len(response.data), 1)
+
